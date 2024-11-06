@@ -77,6 +77,26 @@ renderer = HandTrackerRenderer(
         tracker=tracker,
         output=args.output)
 
+def telexr_post_hand_pose(hands):
+    if len(hands) > 0:
+        # Extract x, y, z values in meters with six decimal places
+        x = hands[0].xyz[0] / 1000
+        y = hands[0].xyz[1] / 1000
+        z = hands[0].xyz[2] / 1000
+
+        # Format the data - rotation neglect
+        formatted_data = f"[{x:.6f}, {y:.6f}, {z:.6f}, 0.0, 0.0, 0.0, 0.0]"
+
+        # Write to the file "hand_data"
+        with open("hand_data", "w") as file:
+            file.write(formatted_data + "\n")
+
+        # Optionally, print for verification
+        # print(f"Data written to hand_data: {formatted_data}")
+        print(f"X: {x:.6f}, Y: {y:.6f}, Z: {z:.6f}")
+
+        
+
 while True:
     # Run hand tracker on next frame
     # 'bag' contains some information related to the frame 
@@ -86,6 +106,9 @@ while True:
     if frame is None: break
     # Draw hands
     frame = renderer.draw(frame, hands, bag)
+    # <RTEN> telexr hand pose added ---------------------
+    telexr_post_hand_pose(hands)
+    # ---------------------------------------------------
     key = renderer.waitKey(delay=1)
     if key == 27 or key == ord('q'):
         break
