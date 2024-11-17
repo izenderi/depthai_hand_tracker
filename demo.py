@@ -103,14 +103,9 @@ def telexr_post_hand_pose(hands):
         return None
 
 # setup the client talker
-<<<<<<< HEAD
 xr = '10.13.145.123'
 port = 9090
 message_id = 0
-=======
-xr = 'localhost'
-port = 9090
->>>>>>> a74b061e1bd29a3e86fb8c241ccd34b7c5220c2a
 
 client = roslibpy.Ros(host=xr, port=port)
 client.run()
@@ -166,4 +161,4 @@ while True:
         if message_id % 4 == 0: # <RTEN> control packet lost
             talker.publish(roslibpy.Message({'data': json.dumps(message_data)}))
         print(f"Sent: ID {message_id}, data: {data_string}")
-
+    # ---------------------------------------------------
