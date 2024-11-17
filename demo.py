@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-
+import socket
+import time
+import json
+import roslibpy
 
 from HandTrackerRenderer import HandTrackerRenderer
 import argparse
@@ -88,14 +91,25 @@ def telexr_post_hand_pose(hands):
         formatted_data = f"[{x:.6f}, {y:.6f}, {z:.6f}, 0.0, 0.0, 0.0, 0.0]"
 
         # Write to the file "hand_data"
-        with open("hand_data", "w") as file:
-            file.write(formatted_data + "\n")
+        # with open("hand_data", "w") as file:
+        #     file.write(formatted_data + "\n")
 
         # Optionally, print for verification
         # print(f"Data written to hand_data: {formatted_data}")
-        print(f"X: {x:.6f}, Y: {y:.6f}, Z: {z:.6f}")
+        # print(f"X: {x:.6f}, Y: {y:.6f}, Z: {z:.6f}")
 
-        
+        return formatted_data
+    else:
+        return None
+
+# setup the client talker
+xr = 'localhost'
+port = 9090
+
+client = roslibpy.Ros(host=xr, port=port)
+client.run()
+
+talker = roslibpy.Topic(client, '/chatter', 'std_msgs/String')
 
 while True:
     # Run hand tracker on next frame
@@ -107,7 +121,14 @@ while True:
     # Draw hands
     frame = renderer.draw(frame, hands, bag)
     # <RTEN> telexr hand pose added ---------------------
-    telexr_post_hand_pose(hands)
+    data_string = telexr_post_hand_pose(hands)
+    if data_string != None:
+        message_data = {
+            'fused_pose': data_string,
+            'time1': time.time()
+        }
+        talker.publish(roslibpy.Message({'data': json.dumps(message_data)}))
+        print("sent data:",data_string)
     # ---------------------------------------------------
     key = renderer.waitKey(delay=1)
     if key == 27 or key == ord('q'):
