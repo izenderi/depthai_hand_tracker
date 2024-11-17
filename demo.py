@@ -158,7 +158,7 @@ while True:
             'fused_pose': data_string,
             'time1': time.time()
         }
-        if message_id % 4 == 0: # <RTEN> control packet lost
+        if message_id % 4 != 0: # <RTEN> control packet lost 25% with %4 != 0
             talker.publish(roslibpy.Message({'data': json.dumps(message_data)}))
         print(f"Sent: ID {message_id}, data: {data_string}")
     # ---------------------------------------------------
