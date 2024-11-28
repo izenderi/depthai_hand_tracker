@@ -99,7 +99,7 @@ def telexr_post_hand_pose(hands):
         return None
 
 # setup the client talker
-xr = '10.13.145.123'
+xr = '10.13.146.99'
 port = 9090
 message_id = 0
 
@@ -142,7 +142,6 @@ try:
             
             # publish the hand data for robot to subscribe
             # sent the hand_data
-            
             if message_id % 1 == 0: # <RTEN> control packet lost 25% with %4 != 0
                 talker.publish(roslibpy.Message({'data': json.dumps(message_data)}))
                 print(f"Sent: ID {message_id}, data: {data_string}")
@@ -175,12 +174,20 @@ try:
     #             'fused_pose': data_string,
     #             'time1': time.time()
     #         }
-    #         if message_id % 4 != 0: # <RTEN> control packet lost 25% with %4 != 0
+
+    #         # Write to the file "hand_data"
+    #         with open("hand_data", "w") as file:
+    #             file.write(data_string + "\n")
+
+    #         # publish the hand data for robot to subscribe
+    #         # sent the hand_data
+    #         if message_id % 1 != 0: # <RTEN> control packet lost 25% with %4 != 0
     #             talker.publish(roslibpy.Message({'data': json.dumps(message_data)}))
     #             print(f"Sent: ID {message_id}, data: {data_string}")
+
     #         # log data
     #         data_log.append([time1, message_id, data_string])
-    #     # ---------------------------------------------------
+        # ---------------------------------------------------
 except Exception as e:
     print(f"Error: {e}")
 finally:
