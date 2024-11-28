@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import csv
+import socket
 import time
 import json
 import roslibpy
@@ -90,6 +90,10 @@ def telexr_post_hand_pose(hands):
         # Format the data - rotation neglect
         formatted_data = f"[{x:.6f}, {y:.6f}, {z:.6f}, 0.0, 0.0, 0.0, 0.0]"
 
+        # Write to the file "hand_data"
+        # with open("hand_data", "w") as file:
+        #     file.write(formatted_data + "\n")
+
         # Optionally, print for verification
         # print(f"Data written to hand_data: {formatted_data}")
         # print(f"X: {x:.6f}, Y: {y:.6f}, Z: {z:.6f}")
@@ -103,92 +107,58 @@ xr = '10.13.145.123'
 port = 9090
 message_id = 0
 
-output_file = 'data.csv'
-data_log = []
-
 client = roslibpy.Ros(host=xr, port=port)
 client.run()
 
 talker = roslibpy.Topic(client, '/chatter', 'std_msgs/String')
 
-try:
-    ##=======================If need frame output=======================
-    while True:
-        # start timer: time1
-        time1 = time.time()
 
-        # Run hand tracker on next frame
-        # 'bag' contains some information related to the frame 
-        # and not related to a particular hand like body keypoints in Body Pre Focusing mode
-        # Currently 'bag' contains meaningful information only when Body Pre Focusing is used
-        frame, hands, bag = tracker.next_frame()
-        if frame is None: break
-        # Draw hands
-        frame = renderer.draw(frame, hands, bag)
-        # <RTEN> telexr hand pose added ---------------------
-        data_string = telexr_post_hand_pose(hands)
+##=======================If need frame output=======================
+# while True:
+#     # Run hand tracker on next frame
+#     # 'bag' contains some information related to the frame 
+#     # and not related to a particular hand like body keypoints in Body Pre Focusing mode
+#     # Currently 'bag' contains meaningful information only when Body Pre Focusing is used
+#     frame, hands, bag = tracker.next_frame()
+#     if frame is None: break
+#     # Draw hands
+#     frame = renderer.draw(frame, hands, bag)
+#     # <RTEN> telexr hand pose added ---------------------
+#     data_string = telexr_post_hand_pose(hands)
+#     if data_string != None:
+#         message_id += 1
+#         message_data = {
+#             'message_id': message_id,
+#             'fused_pose': data_string,
+#             'time1': time.time()
+#         }
+#         talker.publish(roslibpy.Message({'data': json.dumps(message_data)}))
+#         print(f"Sent: ID {message_id}, data: {data_string}")
+#     # ---------------------------------------------------
+#     key = renderer.waitKey(delay=1)
+#     if key == 27 or key == ord('q'):
+#         break
+# renderer.exit()
+# tracker.exit()
 
-        if data_string != None:
-            message_id += 1
-            message_data = {
-                'message_id': message_id,
-                'fused_pose': data_string,
-                'time1': time.time()
-            }
+##=======================If Headless mode=======================
+while True:
+    # Run hand tracker on next frame
+    # 'bag' contains some information related to the frame 
+    # and not related to a particular hand like body keypoints in Body Pre Focusing mode
+    # Currently 'bag' contains meaningful information only when Body Pre Focusing is used
+    frame, hands, bag = tracker.next_frame()
 
-            # Write to the file "hand_data"
-            with open("hand_data", "w") as file:
-                file.write(data_string + "\n")
-            
-            # publish the hand data for robot to subscribe
-            # sent the hand_data
-            
-            if message_id % 1 == 0: # <RTEN> control packet lost 25% with %4 != 0
-                talker.publish(roslibpy.Message({'data': json.dumps(message_data)}))
-                print(f"Sent: ID {message_id}, data: {data_string}")
-            
-            # log data
-            data_log.append([time1, message_id, data_string])
-        # ---------------------------------------------------
-        key = renderer.waitKey(delay=1)
-        if key == 27 or key == ord('q'):
-            break
-    renderer.exit()
-    tracker.exit()
-    ##=======================If Headless mode=======================
-    # while True:
-    #     # start timer: time1
-    #     time1 = time.time()
-
-    #     # Run hand tracker on next frame
-    #     # 'bag' contains some information related to the frame 
-    #     # and not related to a particular hand like body keypoints in Body Pre Focusing mode
-    #     # Currently 'bag' contains meaningful information only when Body Pre Focusing is used
-    #     frame, hands, bag = tracker.next_frame()
-
-    #     # <RTEN> telexr hand pose added ---------------------
-    #     data_string = telexr_post_hand_pose(hands)
-    #     if data_string != None:
-    #         message_id += 1
-    #         message_data = {
-    #             'message_id': message_id,
-    #             'fused_pose': data_string,
-    #             'time1': time.time()
-    #         }
-    #         if message_id % 4 != 0: # <RTEN> control packet lost 25% with %4 != 0
-    #             talker.publish(roslibpy.Message({'data': json.dumps(message_data)}))
-    #             print(f"Sent: ID {message_id}, data: {data_string}")
-    #         # log data
-    #         data_log.append([time1, message_id, data_string])
-    #     # ---------------------------------------------------
-except Exception as e:
-    print(f"Error: {e}")
-finally:
-    print("\nSaving data to CSV...")
-    with open(output_file, mode='w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(["Timestamp", "msg_id", "usr_pose"])
-        writer.writerows(data_log)
-    print(f"Data saved to {output_file}. Exiting...")
-    renderer.exit()
-    tracker.exit()
+    # <RTEN> telexr hand pose added ---------------------
+    data_string = telexr_post_hand_pose(hands)
+    if data_string != None:
+        message_id += 1
+        message_data = {
+            'message_id': message_id,
+            'fused_pose': data_string,
+            'time1': time.time()
+        }
+        if message_id % 4 != 0: # <RTEN> control packet lost 25% with %4 != 0
+            talker.publish(roslibpy.Message({'data': json.dumps(message_data)}))
+        print(f"Sent: ID {message_id}, data: {data_string}")
+    # ---------------------------------------------------
