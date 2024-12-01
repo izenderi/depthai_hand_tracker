@@ -80,15 +80,26 @@ renderer = HandTrackerRenderer(
         tracker=tracker,
         output=args.output)
 
+# for temp buffer of hand pose when no hand
+prev_data = ""
+
 def telexr_post_hand_pose(hands):
+    global prev_data
     if len(hands) > 0:
         # Extract x, y, z values in meters with six decimal places
         x = hands[0].xyz[0] / 1000
         y = hands[0].xyz[1] / 1000
         z = hands[0].xyz[2] / 1000
 
+        if x == 0.0 and y == 0 and z == 0:
+            if prev_data!="":
+                return prev_data
+            else:
+                return None
+
         # Format the data - rotation neglect
         formatted_data = f"[{x:.6f}, {y:.6f}, {z:.6f}, 0.0, 0.0, 0.0, 0.0]"
+        prev_data = formatted_data
 
         # Optionally, print for verification
         # print(f"Data written to hand_data: {formatted_data}")
@@ -96,7 +107,10 @@ def telexr_post_hand_pose(hands):
 
         return formatted_data
     else:
-        return None
+        if prev_data!="":
+            return prev_data
+        else:
+            return None
 
 # setup the client talker
 xr = '10.13.146.99'
@@ -133,7 +147,7 @@ try:
             message_data = {
                 'message_id': message_id,
                 'fused_pose': data_string,
-                'time1': time.time()
+                'time1': time1
             }
 
             # Write to the file "hand_data"
@@ -147,6 +161,7 @@ try:
                 print(f"Sent: ID {message_id}, data: {data_string}")
             
             # log data
+            # print("exe time:", time.time() - time1)
             data_log.append([time1, message_id, data_string])
         # ---------------------------------------------------
         key = renderer.waitKey(delay=1)
@@ -172,7 +187,7 @@ try:
     #         message_data = {
     #             'message_id': message_id,
     #             'fused_pose': data_string,
-    #             'time1': time.time()
+    #             'time1': time1
     #         }
 
     #         # Write to the file "hand_data"
@@ -185,6 +200,7 @@ try:
     #             talker.publish(roslibpy.Message({'data': json.dumps(message_data)}))
     #             print(f"Sent: ID {message_id}, data: {data_string}")
 
+    #         # print("exe time:", time.time() - time1)
     #         # log data
     #         data_log.append([time1, message_id, data_string])
         # ---------------------------------------------------
