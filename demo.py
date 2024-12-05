@@ -107,6 +107,7 @@ def telexr_post_hand_pose(hands):
 
         # Format the data - rotation neglect
         formatted_data = f"[{x:.6f}, {y:.6f}, {z:.6f}, 0.0, 0.0, 0.0, 0.0]"
+        # formatted_data = f"[0.1, 0.2, 0.3, 0.0, 0.0, 0.0, 0.0]" # <RTEN> test
         prev_data = formatted_data
 
         # Optionally, print for verification
@@ -134,49 +135,6 @@ talker = roslibpy.Topic(client, '/chatter', 'std_msgs/String')
 
 try:
     ##=======================If need frame output=======================
-    # while True:
-    #     # start timer: time1
-    #     time1 = time.time()
-
-    #     # Run hand tracker on next frame
-    #     # 'bag' contains some information related to the frame 
-    #     # and not related to a particular hand like body keypoints in Body Pre Focusing mode
-    #     # Currently 'bag' contains meaningful information only when Body Pre Focusing is used
-    #     frame, hands, bag = tracker.next_frame()
-    #     if frame is None: break
-    #     # Draw hands
-    #     frame = renderer.draw(frame, hands, bag)
-    #     # <RTEN> telexr hand pose added ---------------------
-    #     data_string = telexr_post_hand_pose(hands)
-
-    #     if data_string != None:
-    #         message_id += 1
-    #         message_data = {
-    #             'message_id': message_id,
-    #             'fused_pose': data_string,
-    #             'time1': time1
-    #         }
-
-    #         # Write to the file "hand_data"
-    #         with open("hand_data", "w") as file:
-    #             file.write(data_string + "\n")
-            
-    #         # publish the hand data for robot to subscribe
-    #         # sent the hand_data
-    #         if message_id % 1 == 0: # <RTEN> control packet lost 25% with %4 != 0
-    #             talker.publish(roslibpy.Message({'data': json.dumps(message_data)}))
-    #             print(f"Sent: ID {message_id}, data: {data_string}")
-            
-    #         # log data
-    #         print("exe time:", time.time() - time1)
-    #         data_log.append([time1, message_id, data_string])
-    #     # ---------------------------------------------------
-    #     key = renderer.waitKey(delay=1)
-    #     if key == 27 or key == ord('q'):
-    #         break
-    # renderer.exit()
-    # tracker.exit()
-    ##=======================If Headless mode=======================
     while True:
         # start timer: time1
         time1 = time.time()
@@ -186,9 +144,12 @@ try:
         # and not related to a particular hand like body keypoints in Body Pre Focusing mode
         # Currently 'bag' contains meaningful information only when Body Pre Focusing is used
         frame, hands, bag = tracker.next_frame()
-
+        if frame is None: break
+        # Draw hands
+        frame = renderer.draw(frame, hands, bag)
         # <RTEN> telexr hand pose added ---------------------
         data_string = telexr_post_hand_pose(hands)
+
         if data_string != None:
             message_id += 1
             message_data = {
@@ -200,16 +161,56 @@ try:
             # Write to the file "hand_data"
             with open("hand_data", "w") as file:
                 file.write(data_string + "\n")
-
+            
             # publish the hand data for robot to subscribe
             # sent the hand_data
-            if message_id % 1 != 0: # <RTEN> control packet lost 25% with %4 != 0
+            if message_id % 1 == 0: # <RTEN> control packet lost 25% with %4 != 0
                 talker.publish(roslibpy.Message({'data': json.dumps(message_data)}))
                 print(f"Sent: ID {message_id}, data: {data_string}")
-
-            print("exe time:", time.time() - time1)
+            
             # log data
+            print("exe time:", time.time() - time1)
             data_log.append([time1, message_id, data_string])
+        # ---------------------------------------------------
+        key = renderer.waitKey(delay=1)
+        if key == 27 or key == ord('q'):
+            break
+    renderer.exit()
+    tracker.exit()
+    ##=======================If Headless mode=======================
+    # while True:
+    #     # start timer: time1
+    #     time1 = time.time()
+
+    #     # Run hand tracker on next frame
+    #     # 'bag' contains some information related to the frame 
+    #     # and not related to a particular hand like body keypoints in Body Pre Focusing mode
+    #     # Currently 'bag' contains meaningful information only when Body Pre Focusing is used
+    #     frame, hands, bag = tracker.next_frame()
+
+    #     # <RTEN> telexr hand pose added ---------------------
+    #     data_string = telexr_post_hand_pose(hands)
+    #     if data_string != None:
+    #         message_id += 1
+    #         message_data = {
+    #             'message_id': message_id,
+    #             'fused_pose': data_string,
+    #             'time1': time1
+    #         }
+
+    #         # Write to the file "hand_data"
+    #         with open("hand_data", "w") as file:
+    #             file.write(data_string + "\n")
+
+    #         # publish the hand data for robot to subscribe
+    #         # sent the hand_data
+    #         if message_id % 1 != 0: # <RTEN> control packet lost 25% with %4 != 0
+    #             talker.publish(roslibpy.Message({'data': json.dumps(message_data)}))
+    #             print(f"Sent: ID {message_id}, data: {data_string}")
+
+    #         # print("exe time:", time.time() - time1)
+    #         # log data
+    #         data_log.append([time1, message_id, data_string])
         # ---------------------------------------------------
 except Exception as e:
     print(f"Error: {e}")
