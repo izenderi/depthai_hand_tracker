@@ -126,9 +126,36 @@ def telexr_read_and_post_hand_post(df, message_id):
     usr_pose = df['usr_pose'][message_id]
     return usr_pose
 
+def init_sent():
+    while True:
+        frame, hands, bag = tracker.next_frame()
+        if len(hands)>0:
+            break
+        else:
+            if frame is None: break
+            # Draw hands
+            frame = renderer.draw(frame, hands, bag)
+            data_string = df['usr_pose'][0]
+            time1_string = df['Timestamp'][0]
+            message_data = {
+                'message_id': 0,
+                'fused_pose': data_string,
+                'time1': time1_string
+            }
+            # Write to the file "hand_data"
+            with open("hand_data", "w") as file:
+                file.write(data_string + "\n")
+            
+            # publish the hand data for robot to subscribe
+            # sent the hand_data
+            if message_id % 1 == 0: # <RTEN> control packet lost 25% with %4 != 0
+                talker.publish(roslibpy.Message({'data': json.dumps(message_data)}))
+                print(f"Init Sent: ID {message_id}, data: {data_string}")
+            time.sleep(0.01)
+
 # setup the client talker
-# xr = '10.13.144.84'
-xr = 'localhost'
+xr = '10.13.144.84'
+# xr = 'localhost'
 port = 9090
 message_id = 0
 
@@ -140,9 +167,10 @@ client.run()
 
 talker = roslibpy.Topic(client, '/chatter', 'std_msgs/String')
 
-df = pd.read_csv('../../exps/trails_12_6/traj_line.csv')
+df = pd.read_csv('../../exps/trails_12_6/traj12.csv')
 
 try:
+    init_sent()
     ##=======================If need frame output=======================
     while True:
         # start timer: time1

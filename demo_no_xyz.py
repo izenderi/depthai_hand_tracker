@@ -121,8 +121,7 @@ def telexr_post_hand_pose(hands):
             return None
 
 # setup the client talker
-# xr = '10.13.146.99'
-xr = 'localhost'
+xr = '10.13.144.84'
 port = 9090
 message_id = 0
 
@@ -149,29 +148,29 @@ try:
         # Draw hands
         frame = renderer.draw(frame, hands, bag)
         # <RTEN> telexr hand pose added ---------------------
-        data_string = telexr_post_hand_pose(hands)
+        # data_string = telexr_post_hand_pose(hands)
 
-        if data_string != None:
-            message_id += 1
-            message_data = {
-                'message_id': message_id,
-                'fused_pose': data_string,
-                'time1': time1
-            }
+        # if data_string != None:
+        #     message_id += 1
+        #     message_data = {
+        #         'message_id': message_id,
+        #         'fused_pose': data_string,
+        #         'time1': time1
+        #     }
 
-            # Write to the file "hand_data"
-            with open("hand_data", "w") as file:
-                file.write(data_string + "\n")
+        #     # Write to the file "hand_data"
+        #     with open("hand_data", "w") as file:
+        #         file.write(data_string + "\n")
             
-            # publish the hand data for robot to subscribe
-            # sent the hand_data
-            if message_id % 1 == 0: # <RTEN> control packet lost 25% with %4 != 0
-                talker.publish(roslibpy.Message({'data': json.dumps(message_data)}))
-                print(f"Sent: ID {message_id}, data: {data_string}")
+        #     # publish the hand data for robot to subscribe
+        #     # sent the hand_data
+        #     if message_id % 1 == 0: # <RTEN> control packet lost 25% with %4 != 0
+        #         talker.publish(roslibpy.Message({'data': json.dumps(message_data)}))
+        #         print(f"Sent: ID {message_id}, data: {data_string}")
             
             # log data
-            print("exe time:", time.time() - time1)
-            data_log.append([time1, message_id, data_string])
+        print("exe time:", time.time() - time1)
+            # data_log.append([time1, message_id, data_string])
         # ---------------------------------------------------
         key = renderer.waitKey(delay=1)
         if key == 27 or key == ord('q'):
