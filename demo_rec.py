@@ -127,9 +127,13 @@ def telexr_read_and_post_hand_post(df, message_id):
     return usr_pose
 
 def init_sent():
+    count = 0 
     while True:
         frame, hands, bag = tracker.next_frame()
-        if len(hands)>0:
+        # ---------------------------- <RTEN> init delay choose one ----------------------
+        # if len(hands)>0 or count >= 500: # init setup need to have 500
+        if len(hands)>0 or count >= 100: # later just have some delay wait for robot to reach start pos
+        # --------------------------------------------------------------------------------
             break
         else:
             if frame is None: break
@@ -151,10 +155,11 @@ def init_sent():
             if message_id % 1 == 0: # <RTEN> control packet lost 25% with %4 != 0
                 talker.publish(roslibpy.Message({'data': json.dumps(message_data)}))
                 print(f"Init Sent: ID {message_id}, data: {data_string}")
+            count += 1
             time.sleep(0.01)
 
 # setup the client talker
-xr = '10.13.144.84'
+xr = '10.13.145.127'
 # xr = 'localhost'
 port = 9090
 message_id = 0
@@ -162,12 +167,14 @@ message_id = 0
 output_file = 'data.csv'
 data_log = []
 
+lst_exe_time = []
+
 client = roslibpy.Ros(host=xr, port=port)
 client.run()
 
 talker = roslibpy.Topic(client, '/chatter', 'std_msgs/String')
 
-df = pd.read_csv('../../exps/trails_12_6/traj12.csv')
+df = pd.read_csv('../../data/traj_12_6/traj12.csv') # <RTEN> change here for diff traj
 
 try:
     init_sent()
@@ -201,6 +208,10 @@ try:
             # Write to the file "hand_data"
             with open("hand_data", "w") as file:
                 file.write(data_string + "\n")
+
+            # ---------------------- <RTEN> Control Delay -----------------------
+            # time.sleep(0.1)
+            # ----------------------------- </RTEN> -----------------------------
             
             # publish the hand data for robot to subscribe
             # sent the hand_data
@@ -209,7 +220,9 @@ try:
                 print(f"Sent: ID {message_id}, data: {data_string}")
             
             # log data
-            print("exe time:", time.time() - time1)
+            exe_time = time.time() - time1
+            lst_exe_time.append(exe_time)
+            # print("exe time:", time.time() - time1)
             data_log.append([time1, message_id, data_string])
         # ---------------------------------------------------
         key = renderer.waitKey(delay=1)
@@ -224,5 +237,6 @@ finally:
         writer.writerow(["Timestamp", "msg_id", "usr_pose"])
         writer.writerows(data_log)
     print(f"Data saved to {output_file}. Exiting...")
+    print(f"Average execution time: {sum(lst_exe_time)/len(lst_exe_time)}")
     renderer.exit()
     tracker.exit()

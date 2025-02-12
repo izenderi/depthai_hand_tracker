@@ -121,8 +121,8 @@ def telexr_post_hand_pose(hands):
             return None
 
 # setup the client talker
-# xr = '10.13.146.99'
-xr = 'localhost'
+xr = '10.13.145.127'
+# xr = 'localhost'
 port = 9090
 message_id = 0
 
