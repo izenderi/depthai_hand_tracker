@@ -60,7 +60,6 @@ if args.edge:
 else:
     from HandTracker import HandTracker
 
-
 tracker = HandTracker(
         input_src=args.input, 
         use_lm= not args.no_lm, 
@@ -131,8 +130,8 @@ def init_sent():
     while True:
         frame, hands, bag = tracker.next_frame()
         # ---------------------------- <RTEN> init delay choose one ----------------------
-        # if len(hands)>0 or count >= 500: # init setup need to have 500
-        if len(hands)>0 or count >= 100: # later just have some delay wait for robot to reach start pos
+        if len(hands)>0 or count >= 500: # init setup need to have 500
+        # if len(hands)>0 or count >= 100: # later just have some delay wait for robot to reach start pos
         # --------------------------------------------------------------------------------
             break
         else:
@@ -159,8 +158,11 @@ def init_sent():
             time.sleep(0.01)
 
 # setup the client talker
-xr = '10.13.145.127'
-# xr = 'localhost'
+
+# read xr ip from file xr_ip
+xr_ip = ''
+with open("xr_ip", "r") as file:
+    xr_ip = file.read().strip()
 port = 9090
 message_id = 0
 
@@ -169,12 +171,12 @@ data_log = []
 
 lst_exe_time = []
 
-client = roslibpy.Ros(host=xr, port=port)
+client = roslibpy.Ros(host=xr_ip, port=port)
 client.run()
 
 talker = roslibpy.Topic(client, '/chatter', 'std_msgs/String')
 
-df = pd.read_csv('../../data/traj_12_6/traj12.csv') # <RTEN> change here for diff traj
+df = pd.read_csv('../../data/traj_12_6/traj1.csv') # <RTEN> change here for diff traj
 
 try:
     init_sent()
