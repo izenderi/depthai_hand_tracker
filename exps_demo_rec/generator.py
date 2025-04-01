@@ -1,4 +1,19 @@
 #!/usr/bin/env python3
+"""
+This script generates 10 versions of your hand-tracking code with different initial delays,
+and saves them as:
+    _traj6_100ms.py, _traj6_200ms.py, ..., _traj6_1000ms.py
+
+It then zips all the files into generated_files.zip for easy download.
+"""
+
+import os
+import zipfile
+
+# The base template for your code.
+# In the template, the placeholder {delay} will be replaced with the actual delay value,
+# and the placeholder <DELAY_MS> will be replaced with a human‐readable delay in ms.
+base_code = r'''#!/usr/bin/env python3
 import csv
 import time
 import json
@@ -156,7 +171,7 @@ client.run()
 talker = roslibpy.Topic(client, '/chatter', 'std_msgs/String')
 
 # Read trajectory CSV (adjust the path as needed)
-df = pd.read_csv('../../data/traj_12_6/traj12.csv')  # change here for different traj
+df = pd.read_csv('../../data/traj_12_6/traj6.csv')  # change here for different traj
 
 # --- Create a thread-safe Queue for poses ---
 from queue import Queue, Empty
@@ -166,8 +181,8 @@ pose_queue = Queue()
 exit_flag = False
 
 def transmission_thread():
-    # Initial delay (1000ms)
-    time.sleep(1.0)
+    # Initial delay (<DELAY_MS>)
+    time.sleep({delay})
     while not exit_flag or not pose_queue.empty():
         try:
             # Block for a short time waiting for an item
@@ -243,3 +258,31 @@ finally:
         print(f"Average execution time: {sum(lst_exe_time)/len(lst_exe_time)}")
     renderer.exit()
     tracker.exit()
+'''
+
+# Define the delays for the 10 files (in seconds). Here we generate files for 0.1 to 1.0 seconds.
+delays = [0.1 * i for i in range(0, 11)]  # [0.1, 0.2, ..., 1.0]
+
+# Create an output directory for the generated files
+output_dir = "traj6"
+os.makedirs(output_dir, exist_ok=True)
+
+filenames = []
+
+for delay in delays:
+    delay_ms = int(delay * 1000)  # convert to milliseconds
+    filename = f"_traj6_{delay_ms}ms.py"
+    filenames.append(filename)
+    file_content = base_code.replace("{delay}", str(delay)).replace("<DELAY_MS>", f"{delay_ms}ms")
+    with open(os.path.join(output_dir, filename), "w") as f:
+        f.write(file_content)
+
+# # Now, create a ZIP archive containing all the generated files.
+# zip_filename = "generated_files.zip"
+# with zipfile.ZipFile(zip_filename, "w") as zipf:
+#     for file in filenames:
+#         zipf.write(os.path.join(output_dir, file), arcname=file)
+
+# print(f"Zip file '{zip_filename}' created with the following files:")
+# for file in filenames:
+#     print("  -", file)
