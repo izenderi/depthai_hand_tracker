@@ -1,3 +1,5 @@
+> This is the TREX2 implementation repo for DepthAI Hand Tracking. For the TREX2 repo please visit: https://github.com/rtenlab/trex2
+
 # Hand tracking with DepthAI
 
 Running Google Mediapipe Hand Tracking models on [Luxonis DepthAI](https://docs.luxonis.com/projects/hardware/en/latest/) hardware (OAK-D, OAK-D lite, OAK-1,...)
